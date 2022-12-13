@@ -50,23 +50,47 @@ func (c *Client) Insert(database string, collection string, doc map[string]strin
 	return nil
 }
 
+func toBsonD(v interface{}) (doc *bson.D, err error) {
+	data, err := bson.Marshal(v)
+	if err != nil {
+		panic(err)
+		// log.Fatal("Not able to marshal to bson.D")
+	}
+
+	err = bson.Unmarshal(data, &doc)
+	return
+}
+
 func (c *Client) Find(database string, collection string, filter interface{}, sort interface{}) []bson.M {
 	db := c.client.Database(database)
 	col := db.Collection(collection)
 
-	// log.Print("filter is ", filter)
-	// log.Print("sort is ", sort)
-	options := options.FindOptions{Sort: sort}
+	// sort := map[string]int{"_id": -1, "createdAt": -1}
 
-	cur, err := col.Find(context.TODO(), filter, &options)
+	if sort == nil {
+		sort = map[string]int{}
+	}
+	sortValue, err := toBsonD(sort)
 	if err != nil {
-		log.Fatal(err)
-		// return nil
+		panic(err)
+		// log.Fatal("Error in parsing sort object.")
+	}
+
+	optionsV2 := options.FindOptions{Sort: sortValue}
+
+	// log.Print("filter is ", filter)
+	// log.Print("options is ", optionsV2)
+
+	cur, err := col.Find(context.TODO(), filter, &optionsV2)
+	if err != nil {
+		panic(err)
+		// log.Fatal("Error in fetching documents.")
 	}
 
 	var results []bson.M
 	if err = cur.All(context.TODO(), &results); err != nil {
 		panic(err)
+		// log.Fatal("Error in fetching documents.")
 	}
 
 	return results
