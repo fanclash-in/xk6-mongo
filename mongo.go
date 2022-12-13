@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -91,6 +92,12 @@ func (c *Client) Find(database string, collection string, filter interface{}, so
 	if err = cur.All(context.TODO(), &results); err != nil {
 		panic(err)
 		// log.Fatal("Error in fetching documents.")
+	}
+
+	//Converting ObjectId to string
+	for i := 0; i < 1; i++ {
+		// log.Print(results[i]["_id"].(primitive.ObjectID).Hex())
+		results[i]["_id"] = results[i]["_id"].(primitive.ObjectID).Hex()
 	}
 
 	return results
