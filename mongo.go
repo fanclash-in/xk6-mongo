@@ -62,6 +62,20 @@ func toBsonD(v interface{}) (doc *bson.D, err error) {
 	return
 }
 
+func (*Mongo) ToObjectId(id string) (primitive.ObjectID, error) {
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return primitive.ObjectID{}, err
+	}
+
+	return objectId, nil
+}
+
+func (*Mongo) ToString(objectId primitive.ObjectID) string {
+	id := objectId.Hex()
+	return id
+}
+
 func (c *Client) Find(database string, collection string, filter interface{}, sort interface{}, limit int64, skip int64) []bson.M {
 	db := c.client.Database(database)
 	col := db.Collection(collection)
@@ -95,10 +109,10 @@ func (c *Client) Find(database string, collection string, filter interface{}, so
 	}
 
 	//Converting ObjectId to string
-	for i := 0; i < 1; i++ {
-		// log.Print(results[i]["_id"].(primitive.ObjectID).Hex())
-		results[i]["_id"] = results[i]["_id"].(primitive.ObjectID).Hex()
-	}
+	// for i := 0; i < 1; i++ {
+	// 	// log.Print(results[i]["_id"].(primitive.ObjectID).Hex())
+	// 	results[i]["_id"] = results[i]["_id"].(primitive.ObjectID).Hex()
+	// }
 
 	return results
 }
