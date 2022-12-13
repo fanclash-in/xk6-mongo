@@ -61,7 +61,7 @@ func toBsonD(v interface{}) (doc *bson.D, err error) {
 	return
 }
 
-func (c *Client) Find(database string, collection string, filter interface{}, sort interface{}) []bson.M {
+func (c *Client) Find(database string, collection string, filter interface{}, sort interface{}, limit int64, skip int64) []bson.M {
 	db := c.client.Database(database)
 	col := db.Collection(collection)
 
@@ -76,7 +76,7 @@ func (c *Client) Find(database string, collection string, filter interface{}, so
 		// log.Fatal("Error in parsing sort object.")
 	}
 
-	optionsV2 := options.FindOptions{Sort: sortValue}
+	optionsV2 := options.FindOptions{Sort: sortValue, Skip: &skip, Limit: &limit}
 
 	// log.Print("filter is ", filter)
 	// log.Print("options is ", optionsV2)
