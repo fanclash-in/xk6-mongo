@@ -26,21 +26,18 @@ type Client struct {
 	client *mongo.Client
 }
 
-
-
 // NewClient represents the Client constructor (i.e. `new mongo.Client()`) and
 // returns a new Mongo client object.
 // connURI -> mongodb://username:password@address:port/db?connect=direct
 func (*Mongo) NewClient(connURI string) interface{} {
-	
+
 	clientOptions := options.Client().ApplyURI(connURI)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		return err
-	} 
-		return  &Client{client: client}
-	
-	
+	}
+	return &Client{client: client}
+
 }
 
 func (c *Client) Insert(database string, collection string, doc map[string]string) error {
@@ -53,13 +50,15 @@ func (c *Client) Insert(database string, collection string, doc map[string]strin
 	return nil
 }
 
-func (c *Client) Find(database string, collection string, filter interface{}) []bson.M{
+func (c *Client) Find(database string, collection string, filter interface{}, sort interface{}) []bson.M {
 	db := c.client.Database(database)
 	col := db.Collection(collection)
 
-	
-	log.Print("filter is ", filter)
-	cur, err := col.Find(context.TODO(), filter)
+	// log.Print("filter is ", filter)
+	// log.Print("sort is ", sort)
+	options := options.FindOptions{Sort: sort}
+
+	cur, err := col.Find(context.TODO(), filter, &options)
 	if err != nil {
 		log.Fatal(err)
 		// return nil
@@ -69,6 +68,7 @@ func (c *Client) Find(database string, collection string, filter interface{}) []
 	if err = cur.All(context.TODO(), &results); err != nil {
 		panic(err)
 	}
+
 	return results
 }
 
