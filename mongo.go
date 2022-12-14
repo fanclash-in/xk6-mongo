@@ -77,11 +77,11 @@ func (*Mongo) ToString(objectId primitive.ObjectID) string {
 }
 
 // type FindOptions struct {
-// 	limit int64
-// 	skip  int64
-// 	sort  interface{}
-// 	// projection interface{}
-// 	// hint       interface{}
+// 	limit      int64
+// 	skip       int64
+// 	sort       interface{}
+// 	projection interface{}
+// 	hint       interface{}
 // }
 
 func (c *Client) Find(database string, collection string, filter interface{}, findOptions interface{}) []bson.M {
@@ -90,38 +90,41 @@ func (c *Client) Find(database string, collection string, filter interface{}, fi
 
 	// log.Print("findOptions", findOptions)
 	findOptionsV2 := findOptions.(map[string]interface{})
+	options := options.FindOptions{}
 
-	sortValue := &primitive.D{}
-	projectionValue := &primitive.D{}
-	var limitValue int64 = 0
-	var skipValue int64 = 0
-	var hintValue string = ""
+	// sortValue := &primitive.D{}
+	// projectionValue := &primitive.D{}
+	// var limitValue int64 = 0
+	// var skipValue int64 = 0
+	// var hintValue string = ""
 
 	if findOptionsV2["sort"] != nil {
 		doc, err := toBsonD(findOptionsV2["sort"])
 		if err != nil {
 			panic(err)
 		}
-		sortValue = doc
+		options.Sort = doc
 	}
 	if findOptionsV2["projection"] != nil {
 		doc, err := toBsonD(findOptionsV2["projection"])
 		if err != nil {
 			panic(err)
 		}
-		projectionValue = doc
+		options.Projection = doc
 	}
 	if findOptionsV2["limit"] != nil {
-		limitValue = findOptionsV2["limit"].(int64)
+		limitValue := findOptionsV2["limit"].(int64)
+		options.Limit = &limitValue
 	}
 	if findOptionsV2["skip"] != nil {
-		skipValue = findOptionsV2["skip"].(int64)
+		skipValue := findOptionsV2["skip"].(int64)
+		options.Skip = &skipValue
 	}
 	if findOptionsV2["hint"] != nil {
-		hintValue = findOptionsV2["hint"].(string)
+		options.Hint = findOptionsV2["hint"].(string)
 	}
 
-	options := options.FindOptions{Sort: sortValue, Skip: &skipValue, Limit: &limitValue, Projection: projectionValue, Hint: &hintValue}
+	// log.Print("options", options)
 
 	cur, err := col.Find(context.TODO(), filter, &options)
 	if err != nil {
