@@ -76,27 +76,54 @@ func (*Mongo) ToString(objectId primitive.ObjectID) string {
 	return id
 }
 
-func (c *Client) Find(database string, collection string, filter interface{}, sort interface{}, limit int64, skip int64) []bson.M {
+// type FindOptions struct {
+// 	limit int64
+// 	skip  int64
+// 	sort  interface{}
+// 	// projection interface{}
+// 	// hint       interface{}
+// }
+
+func (c *Client) Find(database string, collection string, filter interface{}, findOptions interface{}) []bson.M {
 	db := c.client.Database(database)
 	col := db.Collection(collection)
 
-	// sort := map[string]int{"_id": -1, "createdAt": -1}
+	// log.Print("findOptions", findOptions)
+	findOptionsV2 := findOptions.(map[string]interface{})
 
-	if sort == nil {
-		sort = map[string]int{}
+	sortValue := &primitive.D{}
+	projectionValue := &primitive.D{}
+	var limitValue int64 = 0
+	var skipValue int64 = 0
+	var hintValue string = ""
+
+	if findOptionsV2["sort"] != nil {
+		doc, err := toBsonD(findOptionsV2["sort"])
+		if err != nil {
+			panic(err)
+		}
+		sortValue = doc
 	}
-	sortValue, err := toBsonD(sort)
-	if err != nil {
-		panic(err)
-		// log.Fatal("Error in parsing sort object.")
+	if findOptionsV2["projection"] != nil {
+		doc, err := toBsonD(findOptionsV2["projection"])
+		if err != nil {
+			panic(err)
+		}
+		projectionValue = doc
+	}
+	if findOptionsV2["limit"] != nil {
+		limitValue = findOptionsV2["limit"].(int64)
+	}
+	if findOptionsV2["skip"] != nil {
+		skipValue = findOptionsV2["skip"].(int64)
+	}
+	if findOptionsV2["hint"] != nil {
+		hintValue = findOptionsV2["hint"].(string)
 	}
 
-	optionsV2 := options.FindOptions{Sort: sortValue, Skip: &skip, Limit: &limit}
+	options := options.FindOptions{Sort: sortValue, Skip: &skipValue, Limit: &limitValue, Projection: projectionValue, Hint: &hintValue}
 
-	// log.Print("filter is ", filter)
-	// log.Print("options is ", optionsV2)
-
-	cur, err := col.Find(context.TODO(), filter, &optionsV2)
+	cur, err := col.Find(context.TODO(), filter, &options)
 	if err != nil {
 		panic(err)
 		// log.Fatal("Error in fetching documents.")
