@@ -99,11 +99,19 @@ func (c *Client) Find(database string, collection string, filter interface{}, fi
 	// var hintValue string = ""
 
 	if findOptionsV2["sort"] != nil {
-		doc, err := toBsonD(findOptionsV2["sort"])
-		if err != nil {
-			panic(err)
+		sortOrderArray := findOptionsV2["sort"].([]interface{})
+		var sortValue bson.D
+		for i := 0; i < len(sortOrderArray); i++ {
+			sortOrder := sortOrderArray[i].(map[string]interface{})
+			keys := make([]string, 0, len(sortOrder))
+			for k := range sortOrder {
+				keys = append(keys, k)
+			}
+
+			sortValue = append(sortValue, bson.E{keys[0], sortOrder[keys[0]].(int64)})
 		}
-		options.Sort = doc
+
+		options.Sort = &sortValue
 	}
 	if findOptionsV2["projection"] != nil {
 		doc, err := toBsonD(findOptionsV2["projection"])
@@ -125,7 +133,6 @@ func (c *Client) Find(database string, collection string, filter interface{}, fi
 	}
 
 	// log.Print("options", options)
-
 	cur, err := col.Find(context.TODO(), filter, &options)
 	if err != nil {
 		panic(err)
